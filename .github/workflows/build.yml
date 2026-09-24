@@ -37,26 +37,26 @@ jobs:
           dart --version
 
       - name: Check Flutter project
-        working-directory: service_booking_app
+        working-directory: service_booking_app_flutter/service_booking_app
         run: |
           test -f pubspec.yaml
           echo "Flutter project found."
 
       - name: Get dependencies
-        working-directory: service_booking_app
+        working-directory: service_booking_app_flutter/service_booking_app
         run: flutter pub get
 
       - name: Analyze project
-        working-directory: service_booking_app
+        working-directory: service_booking_app_flutter/service_booking_app
         run: flutter analyze
 
       - name: Build Release APK
-        working-directory: service_booking_app
+        working-directory: service_booking_app_flutter/service_booking_app
         run: flutter build apk --release
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: service-booking-release-apk
-          path: service_booking_app/build/app/outputs/flutter-apk/app-release.apk
+          path: service_booking_app_flutter/service_booking_app/build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: error
