@@ -1,193 +1,74 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-const supabaseUrl =
+const String supabaseUrl =
     'https://lybbdqwgfjekrqhhgdkf.supabase.co';
 
-const supabasePublishableKey =
+const String supabaseAnonKey =
     'sb_publishable_2J95CnOji4M7eU2BInHEXQ_wHw1kkhb';
 
-const appDeepLink =
-    'io.supabase.servicebooking://login-callback/';
-
-final supabase = Supabase.instance.client;
-
-/* =========================================================
-   MAIN
-   ========================================================= */
+late final SupabaseClient supabase;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Supabase.initialize(
     url: supabaseUrl,
-    anonKey: supabasePublishableKey,
+    anonKey: supabaseAnonKey,
   );
 
-  runApp(
-    const ProviderScope(
-      child: BookingApp(),
-    ),
-  );
+  supabase = Supabase.instance.client;
+
+  runApp(const ServiceBookingApp());
 }
 
-/* =========================================================
-   APP
-   ========================================================= */
-
-class BookingApp extends StatefulWidget {
-  const BookingApp({super.key});
-
-  @override
-  State<BookingApp> createState() =>
-      _BookingAppState();
-}
-
-class _BookingAppState
-    extends State<BookingApp> {
-  late final GoRouter _router = GoRouter(
-    initialLocation: '/',
-    refreshListenable:
-        GoRouterRefreshStream(
-      supabase.auth.onAuthStateChange,
-    ),
-    routes: [
-      GoRoute(
-        path: '/',
-        builder: (_, __) =>
-            const HomeScreen(),
-      ),
-      GoRoute(
-        path: '/service/:id',
-        builder: (_, state) =>
-            ServiceScreen(
-          serviceId:
-              state.pathParameters['id']!,
-        ),
-      ),
-      GoRoute(
-        path: '/bookings',
-        builder: (_, __) =>
-            const BookingsScreen(),
-      ),
-      GoRoute(
-        path: '/profile',
-        builder: (_, __) =>
-            const ProfileScreen(),
-      ),
-      GoRoute(
-        path: '/auth',
-        builder: (_, __) =>
-            const AuthScreen(),
-      ),
-      GoRoute(
-        path: '/provider',
-        builder: (_, __) =>
-            const ProviderDashboard(),
-      ),
-      GoRoute(
-        path: '/admin',
-        builder: (_, __) =>
-            const AdminDashboard(),
-      ),
-    ],
-  );
+class ServiceBookingApp extends StatelessWidget {
+  const ServiceBookingApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
+    return MaterialApp(
       title: 'Service Booking',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.theme,
-      routerConfig: _router,
-    );
-  }
-}
-
-/* =========================================================
-   ROUTER AUTH REFRESH
-   ========================================================= */
-
-class GoRouterRefreshStream
-    extends ChangeNotifier {
-  GoRouterRefreshStream(
-    Stream<dynamic> stream,
-  ) {
-    _sub = stream.listen((_) {
-      notifyListeners();
-    });
-  }
-
-  late final dynamic _sub;
-
-  @override
-  void dispose() {
-    _sub.cancel();
-    super.dispose();
-  }
-}
-
-/* =========================================================
-   THEME
-   ========================================================= */
-
-class AppTheme {
-  static ThemeData get theme {
-    return ThemeData(
-      useMaterial3: true,
-      brightness: Brightness.dark,
-      scaffoldBackgroundColor:
-          const Color(0xFF101010),
-      colorScheme:
-          ColorScheme.fromSeed(
-        seedColor:
-            const Color(0xFFFFA65C),
+      theme: ThemeData(
         brightness: Brightness.dark,
-      ),
-      cardTheme: CardThemeData(
-        color:
-            const Color(0xFF1A1A1A),
-        elevation: 0,
-        shape:
-            RoundedRectangleBorder(
-          borderRadius:
-              BorderRadius.circular(22),
+        useMaterial3: true,
+        scaffoldBackgroundColor: const Color(0xFF101010),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFFFFA45C),
+          brightness: Brightness.dark,
+        ),
+        cardTheme: CardThemeData(
+          color: const Color(0xFF1B1B1B),
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: const Color(0xFF1B1B1B),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: BorderSide.none,
+          ),
         ),
       ),
-      inputDecorationTheme:
-          InputDecorationTheme(
-        filled: true,
-        fillColor:
-            const Color(0xFF1A1A1A),
-        border:
-            OutlineInputBorder(
-          borderRadius:
-              BorderRadius.circular(16),
-          borderSide:
-              BorderSide.none,
-        ),
-      ),
-      navigationBarTheme:
-          const NavigationBarThemeData(
-        backgroundColor:
-            Color(0xFF141414),
-      ),
+      home: const HomeScreen(),
     );
   }
 }
 
-/* =========================================================
+/* ============================================================
    HELPERS
-   ========================================================= */
+============================================================ */
 
-String _time(dynamic value) {
-  if (value == null) {
-    return '';
-  }
+String valueString(dynamic value) {
+  return value?.toString() ?? '';
+}
 
-  final text = value.toString();
+String timeString(dynamic value) {
+  final text = valueString(value);
 
   if (text.length >= 5) {
     return text.substring(0, 5);
@@ -196,505 +77,304 @@ String _time(dynamic value) {
   return text;
 }
 
-/* =========================================================
-   REPOSITORY
-   ========================================================= */
+Map<String, dynamic> asMap(dynamic value) {
+  if (value is Map) {
+    return Map<String, dynamic>.from(value);
+  }
 
-class ServiceRepository {
-  Future<List<Map<String, dynamic>>>
-      services() async {
-    final data = await supabase
+  return <String, dynamic>{};
+}
+
+/* ============================================================
+   REPOSITORY
+============================================================ */
+
+class BookingRepository {
+  Future<List<Map<String, dynamic>>> getServices() async {
+    final response = await supabase
         .from('services')
         .select()
         .eq('active', true)
         .order('created_at');
 
-    return List<
-        Map<String, dynamic>>.from(data);
+    return List<Map<String, dynamic>>.from(response);
   }
 
-  Future<Map<String, dynamic>> service(
-    String id,
-  ) async {
-    final data = await supabase
+  Future<Map<String, dynamic>> getService(String id) async {
+    final response = await supabase
         .from('services')
         .select()
         .eq('id', id)
         .single();
 
-    return Map<String, dynamic>.from(
-      data,
-    );
+    return Map<String, dynamic>.from(response);
   }
 
-  Future<List<Map<String, dynamic>>>
-      locations(
+  Future<List<Map<String, dynamic>>> getLocations(
     String serviceId,
   ) async {
     final links = await supabase
         .from('service_locations')
         .select('location_id')
-        .eq(
-          'service_id',
-          serviceId,
-        );
+        .eq('service_id', serviceId);
 
     final ids = links
-        .map<String>(
-          (e) =>
-              e['location_id'] as String,
-        )
+        .map<String>((item) => item['location_id'].toString())
         .toList();
 
     if (ids.isEmpty) {
       return [];
     }
 
-    final data = await supabase
+    final response = await supabase
         .from('locations')
         .select()
         .inFilter('id', ids)
         .eq('active', true);
 
-    return List<
-        Map<String, dynamic>>.from(data);
+    return List<Map<String, dynamic>>.from(response);
   }
 
-  Future<List<Map<String, dynamic>>>
-      slots({
-    required String locationId,
+  Future<List<Map<String, dynamic>>> getSlots({
     required String serviceId,
+    required String locationId,
     required DateTime date,
   }) async {
-    final d =
-        '${date.year.toString().padLeft(4, '0')}-'
-        '${date.month.toString().padLeft(2, '0')}-'
-        '${date.day.toString().padLeft(2, '0')}';
+    final day = date.toIso8601String().substring(0, 10);
 
-    final data = await supabase
+    final response = await supabase
         .from('availability_slots')
         .select()
-        .eq(
-          'location_id',
-          locationId,
-        )
-        .eq(
-          'service_id',
-          serviceId,
-        )
-        .eq(
-          'slot_date',
-          d,
-        )
-        .eq(
-          'status',
-          'available',
-        )
+        .eq('service_id', serviceId)
+        .eq('location_id', locationId)
+        .eq('slot_date', day)
+        .eq('status', 'available')
         .order('start_time');
 
-    return List<
-        Map<String, dynamic>>.from(data);
+    return List<Map<String, dynamic>>.from(response);
   }
 
-  Future<Map<String, dynamic>>
-      createBooking(
+  Future<Map<String, dynamic>> createBooking(
     String slotId,
   ) async {
-    final data = await supabase.rpc(
+    final response = await supabase.rpc(
       'create_booking',
       params: {
         'p_slot_id': slotId,
       },
     );
 
-    return Map<String, dynamic>.from(
-      data,
-    );
+    return Map<String, dynamic>.from(response);
   }
 
-  Future<List<Map<String, dynamic>>>
-      myBookings() async {
-    final data = await supabase
+  Future<List<Map<String, dynamic>>> getMyBookings() async {
+    final response = await supabase
         .from('bookings')
         .select(
-          '*, services(name), '
-          'locations(name), '
-          'availability_slots('
-          'slot_date,start_time,end_time'
-          ')',
+          '*, services(name), locations(name), '
+          'availability_slots(slot_date,start_time,end_time)',
         )
-        .order(
-          'created_at',
-          ascending: false,
-        );
+        .order('created_at', ascending: false);
 
-    return List<
-        Map<String, dynamic>>.from(data);
+    return List<Map<String, dynamic>>.from(response);
   }
 
   Future<void> cancelBooking(
-    String id,
-    String reason,
+    String bookingId,
   ) async {
     await supabase.rpc(
       'cancel_booking',
       params: {
-        'p_booking_id': id,
-        'p_reason': reason,
+        'p_booking_id': bookingId,
+        'p_reason': 'Customer cancellation',
+      },
+    );
+  }
+
+  Future<void> confirmBooking(
+    String bookingId,
+  ) async {
+    await supabase.rpc(
+      'confirm_booking',
+      params: {
+        'p_booking_id': bookingId,
       },
     );
   }
 }
 
-final repo = ServiceRepository();
+final BookingRepository repository = BookingRepository();
 
-/* =========================================================
-   SHELL
-   ========================================================= */
-
-class Shell extends StatelessWidget {
-  final Widget child;
-
-  const Shell({
-    super.key,
-    required this.child,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: child,
-      ),
-      bottomNavigationBar:
-          NavigationBar(
-        selectedIndex:
-            _index(context),
-        onDestinationSelected:
-            (index) {
-          _go(context, index);
-        },
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(
-              Icons.home_outlined,
-            ),
-            selectedIcon:
-                Icon(Icons.home),
-            label: 'Home',
-          ),
-          NavigationDestination(
-            icon: Icon(
-              Icons.receipt_long_outlined,
-            ),
-            selectedIcon: Icon(
-              Icons.receipt_long,
-            ),
-            label: 'Bookings',
-          ),
-          NavigationDestination(
-            icon: Icon(
-              Icons.person_outline,
-            ),
-            selectedIcon: Icon(
-              Icons.person,
-            ),
-            label: 'Profile',
-          ),
-        ],
-      ),
-    );
-  }
-
-  int _index(
-    BuildContext context,
-  ) {
-    final path =
-        GoRouterState.of(
-      context,
-    ).uri.path;
-
-    if (path == '/bookings') {
-      return 1;
-    }
-
-    if (path == '/profile') {
-      return 2;
-    }
-
-    return 0;
-  }
-
-  void _go(
-    BuildContext context,
-    int index,
-  ) {
-    if (index == 1) {
-      context.go('/bookings');
-    } else if (index == 2) {
-      context.go('/profile');
-    } else {
-      context.go('/');
-    }
-  }
-}
-
-/* =========================================================
+/* ============================================================
    HOME
-   ========================================================= */
+============================================================ */
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({
-    super.key,
-  });
+  const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() =>
-      _HomeScreenState();
+  State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState
-    extends State<HomeScreen> {
-  late Future<
-      List<Map<String, dynamic>>>
-      _future;
+class _HomeScreenState extends State<HomeScreen> {
+  late Future<List<Map<String, dynamic>>> servicesFuture;
 
   @override
   void initState() {
     super.initState();
-    _future = repo.services();
+
+    servicesFuture = repository.getServices();
+  }
+
+  Future<void> refresh() async {
+    setState(() {
+      servicesFuture = repository.getServices();
+    });
+
+    await servicesFuture;
   }
 
   @override
   Widget build(BuildContext context) {
-    return Shell(
-      child: RefreshIndicator(
-        onRefresh: () async {
-          setState(() {
-            _future =
-                repo.services();
-          });
-        },
-        child: ListView(
-          padding:
-              const EdgeInsets.fromLTRB(
-            20,
-            18,
-            20,
-            24,
-          ),
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment:
-                        CrossAxisAlignment
-                            .start,
-                    children: [
-                      Text(
-                        'Book your service',
-                        style:
-                            Theme.of(
-                          context,
-                        )
-                                .textTheme
-                                .headlineMedium
-                                ?.copyWith(
-                                  fontWeight:
-                                      FontWeight
-                                          .w800,
-                                ),
-                      ),
-                      const SizedBox(
-                        height: 4,
-                      ),
-                      const Text(
-                        'Choose a service, location, date and time.',
-                        style:
-                            TextStyle(
-                          color:
-                              Colors.white70,
-                        ),
-                      ),
+    return Scaffold(
+      bottomNavigationBar: const AppBottomNavigation(),
+      body: SafeArea(
+        child: RefreshIndicator(
+          onRefresh: refresh,
+          child: ListView(
+            padding: const EdgeInsets.all(20),
+            children: [
+              const SizedBox(height: 10),
+
+              const Text(
+                'Book your service',
+                style: TextStyle(
+                  fontSize: 31,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+
+              const SizedBox(height: 8),
+
+              const Text(
+                'Choose a service, location, date and available time.',
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 15,
+                ),
+              ),
+
+              const SizedBox(height: 24),
+
+              Container(
+                padding: const EdgeInsets.all(22),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(25),
+                  gradient: const LinearGradient(
+                    colors: [
+                      Color(0xFFFFB36D),
+                      Color(0xFFE97F3F),
                     ],
                   ),
                 ),
-                IconButton(
-                  onPressed: () {
-                    context.push(
-                      '/profile',
-                    );
-                  },
-                  icon: const Icon(
-                    Icons
-                        .person_outline,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(
-              height: 22,
-            ),
-            Container(
-              height: 150,
-              padding:
-                  const EdgeInsets.all(
-                22,
-              ),
-              decoration:
-                  BoxDecoration(
-                borderRadius:
-                    BorderRadius.circular(
-                  28,
-                ),
-                gradient:
-                    const LinearGradient(
-                  colors: [
-                    Color(
-                        0xFFFFB06D),
-                    Color(
-                        0xFFEB7E3E),
+                child: const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Simple. Fast. Confirmed.',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 24,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    SizedBox(height: 7),
+                    Text(
+                      'Real-time availability and secure bookings.',
+                      style: TextStyle(
+                        color: Colors.black87,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ],
                 ),
               ),
-              child: const Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment
-                        .start,
-                children: [
-                  Text(
-                    'Simple. Fast. Confirmed.',
-                    style:
-                        TextStyle(
-                      fontSize: 25,
-                      fontWeight:
-                          FontWeight
-                              .w900,
-                      color:
-                          Colors.black,
-                    ),
-                  ),
-                  SizedBox(
-                    height: 8,
-                  ),
-                  Text(
-                    'Real-time availability and secure bookings.',
-                    style:
-                        TextStyle(
-                      color:
-                          Colors.black87,
-                      fontWeight:
-                          FontWeight
-                              .w600,
-                    ),
-                  ),
-                ],
+
+              const SizedBox(height: 28),
+
+              const Text(
+                'Services',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w900,
+                ),
               ),
-            ),
-            const SizedBox(
-              height: 26,
-            ),
-            Text(
-              'Services',
-              style:
-                  Theme.of(context)
-                      .textTheme
-                      .titleLarge
-                      ?.copyWith(
-                        fontWeight:
-                            FontWeight
-                                .w800,
+
+              const SizedBox(height: 14),
+
+              FutureBuilder<List<Map<String, dynamic>>>(
+                future: servicesFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState ==
+                      ConnectionState.waiting) {
+                    return const Padding(
+                      padding: EdgeInsets.all(40),
+                      child: Center(
+                        child: CircularProgressIndicator(),
                       ),
-            ),
-            const SizedBox(
-              height: 12,
-            ),
-            FutureBuilder<
-                List<
-                    Map<String,
-                        dynamic>>>(
-              future: _future,
-              builder:
-                  (context, snapshot) {
-                if (snapshot
-                        .connectionState ==
-                    ConnectionState
-                        .waiting) {
-                  return const Center(
-                    child: Padding(
-                      padding:
-                          EdgeInsets.all(
-                        40,
-                      ),
-                      child:
-                          CircularProgressIndicator(),
-                    ),
-                  );
-                }
-
-                if (snapshot.hasError) {
-                  return const ErrorCard(
-                    message:
-                        'Unable to load services.',
-                  );
-                }
-
-                final data =
-                    snapshot.data ??
-                        [];
-
-                if (data.isEmpty) {
-                  return const EmptyCard(
-                    title:
-                        'No services yet',
-                    message:
-                        'The administrator has not published any services.',
-                  );
-                }
-
-                return GridView
-                    .builder(
-                  shrinkWrap: true,
-                  physics:
-                      const NeverScrollableScrollPhysics(),
-                  itemCount:
-                      data.length,
-                  gridDelegate:
-                      const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing:
-                        12,
-                    mainAxisSpacing:
-                        12,
-                    childAspectRatio:
-                        .9,
-                  ),
-                  itemBuilder:
-                      (_, index) {
-                    return ServiceCard(
-                      service:
-                          data[index],
                     );
-                  },
-                );
-              },
-            ),
-          ],
+                  }
+
+                  if (snapshot.hasError) {
+                    return const ErrorCard(
+                      message: 'Unable to load services.',
+                    );
+                  }
+
+                  final services = snapshot.data ?? [];
+
+                  if (services.isEmpty) {
+                    return const EmptyCard(
+                      title: 'No services yet',
+                      message:
+                          'There are currently no active services.',
+                    );
+                  }
+
+                  return GridView.builder(
+                    shrinkWrap: true,
+                    physics:
+                        const NeverScrollableScrollPhysics(),
+                    itemCount: services.length,
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                      childAspectRatio: .85,
+                    ),
+                    itemBuilder: (context, index) {
+                      return ServiceCard(
+                        service: services[index],
+                      );
+                    },
+                  );
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-/* =========================================================
+/* ============================================================
    SERVICE CARD
-   ========================================================= */
+============================================================ */
 
-class ServiceCard
-    extends StatelessWidget {
-  final Map<String, dynamic>
-      service;
+class ServiceCard extends StatelessWidget {
+  final Map<String, dynamic> service;
 
   const ServiceCard({
     super.key,
@@ -703,48 +383,42 @@ class ServiceCard
 
   @override
   Widget build(BuildContext context) {
+    final id = valueString(service['id']);
+    final name = valueString(service['name']);
+
     return InkWell(
+      borderRadius: BorderRadius.circular(20),
       onTap: () {
-        context.push(
-          '/service/${service['id']}',
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ServiceScreen(
+              serviceId: id,
+            ),
+          ),
         );
       },
-      borderRadius:
-          BorderRadius.circular(22),
       child: Card(
-        clipBehavior:
-            Clip.antiAlias,
+        clipBehavior: Clip.antiAlias,
         child: Column(
-          crossAxisAlignment:
-              CrossAxisAlignment
-                  .start,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
-              child: _RemoteImage(
-                url: service[
-                    'image_url'] as String?,
-                icon: Icons
-                    .medical_services_outlined,
+              child: RemoteImage(
+                url: valueString(service['image_url']),
+                icon: Icons.medical_services_outlined,
               ),
             ),
+
             Padding(
-              padding:
-                  const EdgeInsets
-                      .fromLTRB(
-                14,
-                12,
-                14,
-                14,
-              ),
+              padding: const EdgeInsets.all(14),
               child: Text(
-                '${service['name'] ?? 'Service'}',
+                name.isEmpty ? 'Service' : name,
                 maxLines: 2,
-                style:
-                    const TextStyle(
-                  fontWeight:
-                      FontWeight
-                          .w800,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
                   fontSize: 16,
+                  fontWeight: FontWeight.w800,
                 ),
               ),
             ),
@@ -755,49 +429,43 @@ class ServiceCard
   }
 }
 
-/* =========================================================
+/* ============================================================
    REMOTE IMAGE
-   ========================================================= */
+============================================================ */
 
-class _RemoteImage
-    extends StatelessWidget {
-  final String? url;
+class RemoteImage extends StatelessWidget {
+  final String url;
   final IconData icon;
 
-  const _RemoteImage({
-    this.url,
+  const RemoteImage({
+    super.key,
+    required this.url,
     required this.icon,
   });
 
   @override
   Widget build(BuildContext context) {
-    if (url == null ||
-        url!.isEmpty) {
+    if (url.isEmpty) {
       return Container(
-        color:
-            const Color(0xFF262626),
+        width: double.infinity,
+        color: const Color(0xFF292929),
         child: Center(
           child: Icon(
             icon,
             size: 48,
-            color:
-                const Color(
-              0xFFFFB06D,
-            ),
+            color: const Color(0xFFFFA45C),
           ),
         ),
       );
     }
 
     return Image.network(
-      url!,
-      fit: BoxFit.cover,
+      url,
       width: double.infinity,
-      errorBuilder:
-          (_, __, ___) {
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) {
         return Container(
-          color:
-              const Color(0xFF262626),
+          color: const Color(0xFF292929),
           child: Center(
             child: Icon(
               icon,
@@ -810,12 +478,11 @@ class _RemoteImage
   }
 }
 
-/* =========================================================
+/* ============================================================
    SERVICE SCREEN
-   ========================================================= */
+============================================================ */
 
-class ServiceScreen
-    extends StatefulWidget {
+class ServiceScreen extends StatefulWidget {
   final String serviceId;
 
   const ServiceScreen({
@@ -824,50 +491,302 @@ class ServiceScreen
   });
 
   @override
-  State<ServiceScreen> createState() =>
-      _ServiceScreenState();
+  State<ServiceScreen> createState() => _ServiceScreenState();
 }
 
-class _ServiceScreenState
-    extends State<ServiceScreen> {
+class _ServiceScreenState extends State<ServiceScreen> {
   Map<String, dynamic>? service;
 
-  List<Map<String, dynamic>>
-      locations = [];
+  List<Map<String, dynamic>> locations = [];
+
+  List<Map<String, dynamic>> slots = [];
 
   String? selectedLocation;
 
-  DateTime selectedDate =
-      DateTime.now();
-
-  List<Map<String, dynamic>>
-      slots = [];
-
   String? selectedSlot;
+
+  DateTime selectedDate = DateTime.now();
 
   bool loading = true;
 
   @override
   void initState() {
     super.initState();
-    _load();
+
+    loadData();
   }
 
-  Future<void> _load() async {
+  Future<void> loadData() async {
     setState(() {
       loading = true;
     });
 
     try {
       service =
-          await repo.service(
-        widget.serviceId,
-      );
+          await repository.getService(widget.serviceId);
 
       locations =
-          await repo.locations(
-        widget.serviceId,
-      );
+          await repository.getLocations(widget.serviceId);
 
       if (locations.isNotEmpty) {
         selectedLocation =
+            valueString(locations.first['id']);
+
+        await loadSlots();
+      }
+    } catch (error) {
+      slots = [];
+    }
+
+    if (mounted) {
+      setState(() {
+        loading = false;
+      });
+    }
+  }
+
+  Future<void> loadSlots() async {
+    final location = selectedLocation;
+
+    if (location == null) {
+      return;
+    }
+
+    setState(() {
+      loading = true;
+    });
+
+    try {
+      slots = await repository.getSlots(
+        serviceId: widget.serviceId,
+        locationId: location,
+        date: selectedDate,
+      );
+
+      selectedSlot = null;
+    } catch (error) {
+      slots = [];
+    }
+
+    if (mounted) {
+      setState(() {
+        loading = false;
+      });
+    }
+  }
+
+  Future<void> chooseDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      firstDate: DateTime.now(),
+      lastDate:
+          DateTime.now().add(const Duration(days: 90)),
+      initialDate: selectedDate,
+    );
+
+    if (picked == null) {
+      return;
+    }
+
+    setState(() {
+      selectedDate = picked;
+    });
+
+    await loadSlots();
+  }
+
+  Future<void> book() async {
+    if (selectedSlot == null) {
+      return;
+    }
+
+    if (supabase.auth.currentUser == null) {
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const AuthScreen(),
+        ),
+      );
+
+      return;
+    }
+
+    try {
+      final booking =
+          await repository.createBooking(selectedSlot!);
+
+      if (!mounted) {
+        return;
+      }
+
+      final status =
+          valueString(booking['status']);
+
+      await showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: Text(
+              status == 'confirmed'
+                  ? 'Booking confirmed'
+                  : 'Booking pending',
+            ),
+            content: Text(
+              status == 'confirmed'
+                  ? 'Your appointment has been confirmed.'
+                  : 'Your booking is waiting for provider confirmation for up to 4 hours.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          const BookingsScreen(),
+                    ),
+                  );
+                },
+                child: const Text('View bookings'),
+              ),
+            ],
+          );
+        },
+      );
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'This time slot is no longer available.',
+          ),
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final serviceData = service;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          valueString(serviceData?['name']).isEmpty
+              ? 'Service'
+              : valueString(serviceData?['name']),
+        ),
+      ),
+      body: loading && serviceData == null
+          ? const Center(
+              child: CircularProgressIndicator(),
+            )
+          : ListView(
+              padding: const EdgeInsets.all(20),
+              children: [
+                if (serviceData != null)
+                  ClipRRect(
+                    borderRadius:
+                        BorderRadius.circular(25),
+                    child: SizedBox(
+                      height: 190,
+                      child: RemoteImage(
+                        url: valueString(
+                          serviceData['image_url'],
+                        ),
+                        icon: Icons
+                            .medical_services_outlined,
+                      ),
+                    ),
+                  ),
+
+                const SizedBox(height: 20),
+
+                Text(
+                  valueString(serviceData?['name']),
+                  style: const TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+
+                const SizedBox(height: 8),
+
+                Text(
+                  valueString(
+                    serviceData?['description'],
+                  ),
+                  style: const TextStyle(
+                    color: Colors.white70,
+                  ),
+                ),
+
+                const SizedBox(height: 25),
+
+                const Text(
+                  'Location',
+                  style: TextStyle(
+                    fontSize: 19,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+
+                const SizedBox(height: 10),
+
+                if (locations.isEmpty)
+                  const EmptyCard(
+                    title: 'No locations',
+                    message:
+                        'No locations are available for this service.',
+                  )
+                else
+                  DropdownButtonFormField<String>(
+                    value: selectedLocation,
+                    decoration:
+                        const InputDecoration(
+                      labelText: 'Select location',
+                    ),
+                    items: locations.map((location) {
+                      final id =
+                          valueString(location['id']);
+
+                      return DropdownMenuItem<String>(
+                        value: id,
+                        child: Text(
+                          valueString(
+                            location['name'],
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (value) async {
+                      if (value == null) {
+                        return;
+                      }
+
+                      setState(() {
+                        selectedLocation = value;
+                      });
+
+                      await loadSlots();
+                    },
+                  ),
+
+                const SizedBox(height: 22),
+
+                const Text(
+                  'Date',
+                  style: TextStyle(
+                    fontSize: 19,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+
+                const SizedBox(height: 10),
+
+                Card(
+                  child: ListTile(
