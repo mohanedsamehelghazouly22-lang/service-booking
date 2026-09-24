@@ -14,49 +14,46 @@ jobs:
     name: Build Android APK
     runs-on: ubuntu-latest
 
-    defaults:
-      run:
-        working-directory: service_booking_app
-
     steps:
-      # 1. Download repository
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
-      # 2. Setup Java
       - name: Setup Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: "17"
 
-      # 3. Setup Flutter
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.9.2"
           channel: stable
+          flutter-version: "3.47.0"
           cache: true
 
-      # 4. Check Flutter installation
       - name: Check Flutter
         run: |
           flutter --version
           dart --version
 
-      # 5. Get Flutter dependencies
+      - name: Check Flutter project
+        working-directory: service_booking_app
+        run: |
+          test -f pubspec.yaml
+          echo "Flutter project found."
+
       - name: Get dependencies
+        working-directory: service_booking_app
         run: flutter pub get
 
-      # 6. Analyze project
       - name: Analyze project
+        working-directory: service_booking_app
         run: flutter analyze
 
-      # 7. Build release APK
       - name: Build Release APK
+        working-directory: service_booking_app
         run: flutter build apk --release
 
-      # 8. Upload APK
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
