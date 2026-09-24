@@ -3,13 +3,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-const supabaseUrl = 'https://lybbdqwgfjekrqhhgdkf.supabase.co';
+const supabaseUrl =
+    'https://lybbdqwgfjekrqhhgdkf.supabase.co';
+
 const supabasePublishableKey =
     'sb_publishable_2J95CnOji4M7eU2BInHEXQ_wHw1kkhb';
 
-const appDeepLink = 'io.supabase.servicebooking://login-callback/';
+const appDeepLink =
+    'io.supabase.servicebooking://login-callback/';
 
 final supabase = Supabase.instance.client;
+
+/* =========================================================
+   MAIN
+   ========================================================= */
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,49 +33,64 @@ Future<void> main() async {
   );
 }
 
+/* =========================================================
+   APP
+   ========================================================= */
+
 class BookingApp extends StatefulWidget {
   const BookingApp({super.key});
 
   @override
-  State<BookingApp> createState() => _BookingAppState();
+  State<BookingApp> createState() =>
+      _BookingAppState();
 }
 
-class _BookingAppState extends State<BookingApp> {
+class _BookingAppState
+    extends State<BookingApp> {
   late final GoRouter _router = GoRouter(
     initialLocation: '/',
-    refreshListenable: GoRouterRefreshStream(
+    refreshListenable:
+        GoRouterRefreshStream(
       supabase.auth.onAuthStateChange,
     ),
     routes: [
       GoRoute(
         path: '/',
-        builder: (_, __) => const HomeScreen(),
+        builder: (_, __) =>
+            const HomeScreen(),
       ),
       GoRoute(
         path: '/service/:id',
-        builder: (_, state) => ServiceScreen(
-          serviceId: state.pathParameters['id']!,
+        builder: (_, state) =>
+            ServiceScreen(
+          serviceId:
+              state.pathParameters['id']!,
         ),
       ),
       GoRoute(
         path: '/bookings',
-        builder: (_, __) => const BookingsScreen(),
+        builder: (_, __) =>
+            const BookingsScreen(),
       ),
       GoRoute(
         path: '/profile',
-        builder: (_, __) => const ProfileScreen(),
+        builder: (_, __) =>
+            const ProfileScreen(),
       ),
       GoRoute(
         path: '/auth',
-        builder: (_, __) => const AuthScreen(),
+        builder: (_, __) =>
+            const AuthScreen(),
       ),
       GoRoute(
         path: '/provider',
-        builder: (_, __) => const ProviderDashboard(),
+        builder: (_, __) =>
+            const ProviderDashboard(),
       ),
       GoRoute(
         path: '/admin',
-        builder: (_, __) => const AdminDashboard(),
+        builder: (_, __) =>
+            const AdminDashboard(),
       ),
     ],
   );
@@ -84,8 +106,15 @@ class _BookingAppState extends State<BookingApp> {
   }
 }
 
-class GoRouterRefreshStream extends ChangeNotifier {
-  GoRouterRefreshStream(Stream<dynamic> stream) {
+/* =========================================================
+   ROUTER AUTH REFRESH
+   ========================================================= */
+
+class GoRouterRefreshStream
+    extends ChangeNotifier {
+  GoRouterRefreshStream(
+    Stream<dynamic> stream,
+  ) {
     _sub = stream.listen((_) {
       notifyListeners();
     });
@@ -100,69 +129,121 @@ class GoRouterRefreshStream extends ChangeNotifier {
   }
 }
 
+/* =========================================================
+   THEME
+   ========================================================= */
+
 class AppTheme {
   static ThemeData get theme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
-      scaffoldBackgroundColor: const Color(0xFF101010),
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: const Color(0xFFFFA65C),
+      scaffoldBackgroundColor:
+          const Color(0xFF101010),
+      colorScheme:
+          ColorScheme.fromSeed(
+        seedColor:
+            const Color(0xFFFFA65C),
         brightness: Brightness.dark,
       ),
       cardTheme: CardThemeData(
-        color: const Color(0xFF1A1A1A),
+        color:
+            const Color(0xFF1A1A1A),
         elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(22),
+        shape:
+            RoundedRectangleBorder(
+          borderRadius:
+              BorderRadius.circular(22),
         ),
       ),
-      inputDecorationTheme: InputDecorationTheme(
+      inputDecorationTheme:
+          InputDecorationTheme(
         filled: true,
-        fillColor: const Color(0xFF1A1A1A),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide.none,
+        fillColor:
+            const Color(0xFF1A1A1A),
+        border:
+            OutlineInputBorder(
+          borderRadius:
+              BorderRadius.circular(16),
+          borderSide:
+              BorderSide.none,
         ),
       ),
-      navigationBarTheme: const NavigationBarThemeData(
-        backgroundColor: Color(0xFF141414),
+      navigationBarTheme:
+          const NavigationBarThemeData(
+        backgroundColor:
+            Color(0xFF141414),
       ),
     );
   }
 }
 
+/* =========================================================
+   HELPERS
+   ========================================================= */
+
+String _time(dynamic value) {
+  if (value == null) {
+    return '';
+  }
+
+  final text = value.toString();
+
+  if (text.length >= 5) {
+    return text.substring(0, 5);
+  }
+
+  return text;
+}
+
+/* =========================================================
+   REPOSITORY
+   ========================================================= */
+
 class ServiceRepository {
-  Future<List<Map<String, dynamic>>> services() async {
+  Future<List<Map<String, dynamic>>>
+      services() async {
     final data = await supabase
         .from('services')
         .select()
         .eq('active', true)
         .order('created_at');
 
-    return List<Map<String, dynamic>>.from(data);
+    return List<
+        Map<String, dynamic>>.from(data);
   }
 
-  Future<Map<String, dynamic>> service(String id) async {
+  Future<Map<String, dynamic>> service(
+    String id,
+  ) async {
     final data = await supabase
         .from('services')
         .select()
         .eq('id', id)
         .single();
 
-    return Map<String, dynamic>.from(data);
+    return Map<String, dynamic>.from(
+      data,
+    );
   }
 
-  Future<List<Map<String, dynamic>>> locations(
+  Future<List<Map<String, dynamic>>>
+      locations(
     String serviceId,
   ) async {
     final links = await supabase
         .from('service_locations')
         .select('location_id')
-        .eq('service_id', serviceId);
+        .eq(
+          'service_id',
+          serviceId,
+        );
 
     final ids = links
-        .map<String>((e) => e['location_id'] as String)
+        .map<String>(
+          (e) =>
+              e['location_id'] as String,
+        )
         .toList();
 
     if (ids.isEmpty) {
@@ -175,10 +256,12 @@ class ServiceRepository {
         .inFilter('id', ids)
         .eq('active', true);
 
-    return List<Map<String, dynamic>>.from(data);
+    return List<
+        Map<String, dynamic>>.from(data);
   }
 
-  Future<List<Map<String, dynamic>>> slots({
+  Future<List<Map<String, dynamic>>>
+      slots({
     required String locationId,
     required String serviceId,
     required DateTime date,
@@ -191,16 +274,30 @@ class ServiceRepository {
     final data = await supabase
         .from('availability_slots')
         .select()
-        .eq('location_id', locationId)
-        .eq('service_id', serviceId)
-        .eq('slot_date', d)
-        .eq('status', 'available')
+        .eq(
+          'location_id',
+          locationId,
+        )
+        .eq(
+          'service_id',
+          serviceId,
+        )
+        .eq(
+          'slot_date',
+          d,
+        )
+        .eq(
+          'status',
+          'available',
+        )
         .order('start_time');
 
-    return List<Map<String, dynamic>>.from(data);
+    return List<
+        Map<String, dynamic>>.from(data);
   }
 
-  Future<Map<String, dynamic>> createBooking(
+  Future<Map<String, dynamic>>
+      createBooking(
     String slotId,
   ) async {
     final data = await supabase.rpc(
@@ -210,22 +307,29 @@ class ServiceRepository {
       },
     );
 
-    return Map<String, dynamic>.from(data);
+    return Map<String, dynamic>.from(
+      data,
+    );
   }
 
-  Future<List<Map<String, dynamic>>> myBookings() async {
+  Future<List<Map<String, dynamic>>>
+      myBookings() async {
     final data = await supabase
         .from('bookings')
         .select(
-          '*, services(name), locations(name), '
-          'availability_slots(slot_date,start_time,end_time)',
+          '*, services(name), '
+          'locations(name), '
+          'availability_slots('
+          'slot_date,start_time,end_time'
+          ')',
         )
         .order(
           'created_at',
           ascending: false,
         );
 
-    return List<Map<String, dynamic>>.from(data);
+    return List<
+        Map<String, dynamic>>.from(data);
   }
 
   Future<void> cancelBooking(
@@ -244,6 +348,10 @@ class ServiceRepository {
 
 final repo = ServiceRepository();
 
+/* =========================================================
+   SHELL
+   ========================================================= */
+
 class Shell extends StatelessWidget {
   final Widget child;
 
@@ -258,25 +366,39 @@ class Shell extends StatelessWidget {
       body: SafeArea(
         child: child,
       ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _index(context),
-        onDestinationSelected: (index) {
+      bottomNavigationBar:
+          NavigationBar(
+        selectedIndex:
+            _index(context),
+        onDestinationSelected:
+            (index) {
           _go(context, index);
         },
         destinations: const [
           NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home),
+            icon: Icon(
+              Icons.home_outlined,
+            ),
+            selectedIcon:
+                Icon(Icons.home),
             label: 'Home',
           ),
           NavigationDestination(
-            icon: Icon(Icons.receipt_long_outlined),
-            selectedIcon: Icon(Icons.receipt_long),
+            icon: Icon(
+              Icons.receipt_long_outlined,
+            ),
+            selectedIcon: Icon(
+              Icons.receipt_long,
+            ),
             label: 'Bookings',
           ),
           NavigationDestination(
-            icon: Icon(Icons.person_outline),
-            selectedIcon: Icon(Icons.person),
+            icon: Icon(
+              Icons.person_outline,
+            ),
+            selectedIcon: Icon(
+              Icons.person,
+            ),
             label: 'Profile',
           ),
         ],
@@ -284,8 +406,13 @@ class Shell extends StatelessWidget {
     );
   }
 
-  int _index(BuildContext context) {
-    final path = GoRouterState.of(context).uri.path;
+  int _index(
+    BuildContext context,
+  ) {
+    final path =
+        GoRouterState.of(
+      context,
+    ).uri.path;
 
     if (path == '/bookings') {
       return 1;
@@ -312,17 +439,25 @@ class Shell extends StatelessWidget {
   }
 }
 
+/* =========================================================
+   HOME
+   ========================================================= */
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
     super.key,
   });
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<HomeScreen> createState() =>
+      _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
-  late Future<List<Map<String, dynamic>>> _future;
+class _HomeScreenState
+    extends State<HomeScreen> {
+  late Future<
+      List<Map<String, dynamic>>>
+      _future;
 
   @override
   void initState() {
@@ -336,11 +471,13 @@ class _HomeScreenState extends State<HomeScreen> {
       child: RefreshIndicator(
         onRefresh: () async {
           setState(() {
-            _future = repo.services();
+            _future =
+                repo.services();
           });
         },
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(
+          padding:
+              const EdgeInsets.fromLTRB(
             20,
             18,
             20,
@@ -352,22 +489,32 @@ class _HomeScreenState extends State<HomeScreen> {
                 Expanded(
                   child: Column(
                     crossAxisAlignment:
-                        CrossAxisAlignment.start,
+                        CrossAxisAlignment
+                            .start,
                     children: [
                       Text(
                         'Book your service',
-                        style: Theme.of(context)
-                            .textTheme
-                            .headlineMedium
-                            ?.copyWith(
-                              fontWeight: FontWeight.w800,
-                            ),
+                        style:
+                            Theme.of(
+                          context,
+                        )
+                                .textTheme
+                                .headlineMedium
+                                ?.copyWith(
+                                  fontWeight:
+                                      FontWeight
+                                          .w800,
+                                ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(
+                        height: 4,
+                      ),
                       const Text(
                         'Choose a service, location, date and time.',
-                        style: TextStyle(
-                          color: Colors.white70,
+                        style:
+                            TextStyle(
+                          color:
+                              Colors.white70,
                         ),
                       ),
                     ],
@@ -375,105 +522,159 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 IconButton(
                   onPressed: () {
-                    context.push('/profile');
+                    context.push(
+                      '/profile',
+                    );
                   },
                   icon: const Icon(
-                    Icons.person_outline,
+                    Icons
+                        .person_outline,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 22),
+            const SizedBox(
+              height: 22,
+            ),
             Container(
               height: 150,
-              padding: const EdgeInsets.all(22),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(28),
-                gradient: const LinearGradient(
+              padding:
+                  const EdgeInsets.all(
+                22,
+              ),
+              decoration:
+                  BoxDecoration(
+                borderRadius:
+                    BorderRadius.circular(
+                  28,
+                ),
+                gradient:
+                    const LinearGradient(
                   colors: [
-                    Color(0xFFFFB06D),
-                    Color(0xFFEB7E3E),
+                    Color(
+                        0xFFFFB06D),
+                    Color(
+                        0xFFEB7E3E),
                   ],
                 ),
               ),
               child: const Column(
                 crossAxisAlignment:
-                    CrossAxisAlignment.start,
+                    CrossAxisAlignment
+                        .start,
                 children: [
                   Text(
                     'Simple. Fast. Confirmed.',
-                    style: TextStyle(
+                    style:
+                        TextStyle(
                       fontSize: 25,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.black,
+                      fontWeight:
+                          FontWeight
+                              .w900,
+                      color:
+                          Colors.black,
                     ),
                   ),
-                  SizedBox(height: 8),
+                  SizedBox(
+                    height: 8,
+                  ),
                   Text(
                     'Real-time availability and secure bookings.',
-                    style: TextStyle(
-                      color: Colors.black87,
-                      fontWeight: FontWeight.w600,
+                    style:
+                        TextStyle(
+                      color:
+                          Colors.black87,
+                      fontWeight:
+                          FontWeight
+                              .w600,
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 26),
+            const SizedBox(
+              height: 26,
+            ),
             Text(
               'Services',
-              style: Theme.of(context)
-                  .textTheme
-                  .titleLarge
-                  ?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
+              style:
+                  Theme.of(context)
+                      .textTheme
+                      .titleLarge
+                      ?.copyWith(
+                        fontWeight:
+                            FontWeight
+                                .w800,
+                      ),
             ),
-            const SizedBox(height: 12),
-            FutureBuilder<List<Map<String, dynamic>>>(
+            const SizedBox(
+              height: 12,
+            ),
+            FutureBuilder<
+                List<
+                    Map<String,
+                        dynamic>>>(
               future: _future,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState ==
-                    ConnectionState.waiting) {
+              builder:
+                  (context, snapshot) {
+                if (snapshot
+                        .connectionState ==
+                    ConnectionState
+                        .waiting) {
                   return const Center(
                     child: Padding(
-                      padding: EdgeInsets.all(40),
-                      child: CircularProgressIndicator(),
+                      padding:
+                          EdgeInsets.all(
+                        40,
+                      ),
+                      child:
+                          CircularProgressIndicator(),
                     ),
                   );
                 }
 
                 if (snapshot.hasError) {
                   return const ErrorCard(
-                    message: 'Unable to load services.',
+                    message:
+                        'Unable to load services.',
                   );
                 }
 
-                final data = snapshot.data ?? [];
+                final data =
+                    snapshot.data ??
+                        [];
 
                 if (data.isEmpty) {
                   return const EmptyCard(
-                    title: 'No services yet',
+                    title:
+                        'No services yet',
                     message:
                         'The administrator has not published any services.',
                   );
                 }
 
-                return GridView.builder(
+                return GridView
+                    .builder(
                   shrinkWrap: true,
                   physics:
                       const NeverScrollableScrollPhysics(),
-                  itemCount: data.length,
+                  itemCount:
+                      data.length,
                   gridDelegate:
                       const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                    childAspectRatio: .9,
+                    crossAxisSpacing:
+                        12,
+                    mainAxisSpacing:
+                        12,
+                    childAspectRatio:
+                        .9,
                   ),
-                  itemBuilder: (_, index) {
+                  itemBuilder:
+                      (_, index) {
                     return ServiceCard(
-                      service: data[index],
+                      service:
+                          data[index],
                     );
                   },
                 );
@@ -486,8 +687,14 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-class ServiceCard extends StatelessWidget {
-  final Map<String, dynamic> service;
+/* =========================================================
+   SERVICE CARD
+   ========================================================= */
+
+class ServiceCard
+    extends StatelessWidget {
+  final Map<String, dynamic>
+      service;
 
   const ServiceCard({
     super.key,
@@ -502,21 +709,28 @@ class ServiceCard extends StatelessWidget {
           '/service/${service['id']}',
         );
       },
-      borderRadius: BorderRadius.circular(22),
+      borderRadius:
+          BorderRadius.circular(22),
       child: Card(
-        clipBehavior: Clip.antiAlias,
+        clipBehavior:
+            Clip.antiAlias,
         child: Column(
           crossAxisAlignment:
-              CrossAxisAlignment.start,
+              CrossAxisAlignment
+                  .start,
           children: [
             Expanded(
               child: _RemoteImage(
-                url: service['image_url'] as String?,
-                icon: Icons.medical_services_outlined,
+                url: service[
+                    'image_url'] as String?,
+                icon: Icons
+                    .medical_services_outlined,
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(
+              padding:
+                  const EdgeInsets
+                      .fromLTRB(
                 14,
                 12,
                 14,
@@ -525,8 +739,11 @@ class ServiceCard extends StatelessWidget {
               child: Text(
                 '${service['name'] ?? 'Service'}',
                 maxLines: 2,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w800,
+                style:
+                    const TextStyle(
+                  fontWeight:
+                      FontWeight
+                          .w800,
                   fontSize: 16,
                 ),
               ),
@@ -538,7 +755,12 @@ class ServiceCard extends StatelessWidget {
   }
 }
 
-class _RemoteImage extends StatelessWidget {
+/* =========================================================
+   REMOTE IMAGE
+   ========================================================= */
+
+class _RemoteImage
+    extends StatelessWidget {
   final String? url;
   final IconData icon;
 
@@ -549,14 +771,19 @@ class _RemoteImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (url == null || url!.isEmpty) {
+    if (url == null ||
+        url!.isEmpty) {
       return Container(
-        color: const Color(0xFF262626),
+        color:
+            const Color(0xFF262626),
         child: Center(
           child: Icon(
             icon,
             size: 48,
-            color: const Color(0xFFFFB06D),
+            color:
+                const Color(
+              0xFFFFB06D,
+            ),
           ),
         ),
       );
@@ -566,9 +793,11 @@ class _RemoteImage extends StatelessWidget {
       url!,
       fit: BoxFit.cover,
       width: double.infinity,
-      errorBuilder: (_, __, ___) {
+      errorBuilder:
+          (_, __, ___) {
         return Container(
-          color: const Color(0xFF262626),
+          color:
+              const Color(0xFF262626),
           child: Center(
             child: Icon(
               icon,
@@ -581,7 +810,12 @@ class _RemoteImage extends StatelessWidget {
   }
 }
 
-class ServiceScreen extends StatefulWidget {
+/* =========================================================
+   SERVICE SCREEN
+   ========================================================= */
+
+class ServiceScreen
+    extends StatefulWidget {
   final String serviceId;
 
   const ServiceScreen({
@@ -594,16 +828,21 @@ class ServiceScreen extends StatefulWidget {
       _ServiceScreenState();
 }
 
-class _ServiceScreenState extends State<ServiceScreen> {
-  final _repo = repo;
-
+class _ServiceScreenState
+    extends State<ServiceScreen> {
   Map<String, dynamic>? service;
-  List<Map<String, dynamic>> locations = [];
+
+  List<Map<String, dynamic>>
+      locations = [];
 
   String? selectedLocation;
-  DateTime selectedDate = DateTime.now();
 
-  List<Map<String, dynamic>> slots = [];
+  DateTime selectedDate =
+      DateTime.now();
+
+  List<Map<String, dynamic>>
+      slots = [];
+
   String? selectedSlot;
 
   bool loading = true;
@@ -620,191 +859,15 @@ class _ServiceScreenState extends State<ServiceScreen> {
     });
 
     try {
-      service = await _repo.service(
+      service =
+          await repo.service(
         widget.serviceId,
       );
 
-      locations = await _repo.locations(
+      locations =
+          await repo.locations(
         widget.serviceId,
       );
 
       if (locations.isNotEmpty) {
         selectedLocation =
-            locations.first['id'];
-
-        await _loadSlots();
-      }
-    } catch (_) {
-      // Error handled by the UI state.
-    } finally {
-      if (mounted) {
-        setState(() {
-          loading = false;
-        });
-      }
-    }
-  }
-
-  Future<void> _loadSlots() async {
-    if (selectedLocation == null) {
-      return;
-    }
-
-    setState(() {
-      loading = true;
-    });
-
-    try {
-      slots = await _repo.slots(
-        locationId: selectedLocation!,
-        serviceId: widget.serviceId,
-        date: selectedDate,
-      );
-
-      selectedSlot = null;
-    } finally {
-      if (mounted) {
-        setState(() {
-          loading = false;
-        });
-      }
-    }
-  }
-
-  Future<void> _book() async {
-    if (selectedSlot == null) {
-      return;
-    }
-
-    if (supabase.auth.currentUser == null) {
-      if (mounted) {
-        context.push('/auth');
-      }
-      return;
-    }
-
-    try {
-      final booking = await _repo.createBooking(
-        selectedSlot!,
-      );
-
-      if (!mounted) {
-        return;
-      }
-
-      final confirmed =
-          booking['status'] == 'confirmed';
-
-      showDialog(
-        context: context,
-        builder: (_) {
-          return AlertDialog(
-            title: Text(
-              confirmed
-                  ? 'Booking confirmed'
-                  : 'Booking pending',
-            ),
-            content: Text(
-              confirmed
-                  ? 'Your appointment is confirmed.'
-                  : 'Your booking is pending provider confirmation for up to 4 hours.',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  context.go('/bookings');
-                },
-                child: const Text(
-                  'View bookings',
-                ),
-              ),
-            ],
-          );
-        },
-      );
-    } catch (_) {
-      if (!mounted) {
-        return;
-      }
-
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
-        const SnackBar(
-          content: Text(
-            'This time slot is no longer available. Please choose another slot.',
-          ),
-        ),
-      );
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final s = service;
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          s?['name'] ?? 'Service',
-        ),
-      ),
-      body: loading && s == null
-          ? const Center(
-              child: CircularProgressIndicator(),
-            )
-          : ListView(
-              padding: const EdgeInsets.all(20),
-              children: [
-                if (s != null)
-                  ClipRRect(
-                    borderRadius:
-                        BorderRadius.circular(26),
-                    child: SizedBox(
-                      height: 190,
-                      child: _RemoteImage(
-                        url: s['image_url'],
-                        icon: Icons
-                            .medical_services_outlined,
-                      ),
-                    ),
-                  ),
-                const SizedBox(height: 18),
-                Text(
-                  s?['name'] ?? 'Service',
-                  style: Theme.of(context)
-                      .textTheme
-                      .headlineSmall
-                      ?.copyWith(
-                        fontWeight: FontWeight.w900,
-                      ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  s?['description'] ??
-                      'Choose a location and available time.',
-                  style: const TextStyle(
-                    color: Colors.white70,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                const Text(
-                  'Location',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                ...locations.map(
-                  (location) {
-                    return RadioListTile<String>(
-                      value: location['id'],
-                      groupValue:
-                          selectedLocation,
-                      title: Text(
-                        location['name'],
-                      ),
-                      subtitle: Text(
-                        location['address'] ?? '',
-                      ),
-                      onChanged: (val
