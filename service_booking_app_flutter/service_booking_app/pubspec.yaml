@@ -1,0 +1,20 @@
+name: service_booking_app
+description: Production-ready Android service booking platform backed by Supabase.
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.12.0 <4.0.0"
+  flutter: ">=3.44.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  supabase_flutter: ^2.17.2
+  flutter_riverpod: ^3.4.3
+  go_router: ^18.0.1
+  image_picker: ^1.2.3
+
+flutter:
+  uses-material-design: true

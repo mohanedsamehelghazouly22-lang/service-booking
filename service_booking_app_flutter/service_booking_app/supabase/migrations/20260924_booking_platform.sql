@@ -1,0 +1,4 @@
+-- This migration documents the production schema applied to the connected Supabase project.
+-- It is intentionally kept as a deployment record; the live project has already received
+-- the equivalent SQL through the Supabase management connection.
+-- For a new environment, apply the SQL from the project setup procedure before launching.
