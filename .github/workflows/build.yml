@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Build Release APK
 
 on:
   workflow_dispatch:
@@ -6,45 +6,60 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+
 jobs:
   build-apk:
-    name: Build Release APK
+    name: Build Android APK
     runs-on: ubuntu-latest
 
+    defaults:
+      run:
+        working-directory: service_booking_app
+
     steps:
+      # 1. Download repository
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Java
+      # 2. Setup Java
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "17"
 
-      - name: Set up Flutter
+      # 3. Setup Flutter
+      - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.35.7"
+          flutter-version: "3.9.2"
           channel: stable
           cache: true
 
+      # 4. Check Flutter installation
       - name: Check Flutter
         run: |
           flutter --version
           dart --version
 
+      # 5. Get Flutter dependencies
       - name: Get dependencies
         run: flutter pub get
 
+      # 6. Analyze project
       - name: Analyze project
         run: flutter analyze
 
+      # 7. Build release APK
       - name: Build Release APK
         run: flutter build apk --release
 
+      # 8. Upload APK
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: service-booking-release-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+          path: service_booking_app/build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: error
